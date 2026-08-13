@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temperature Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-2">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-emerald-400"><i class="fa-solid fa-temperature-half mr-2"></i>Temperature & Climate Dashboard</h1>
+        <p class="text-slate-400 text-sm">ระบบติดตามอุณหภูมิและความชื้นแบบ Real-time</p>
+      </div>
+      <div class="text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full text-slate-300">
+        <span class="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse mr-1"></span> อัปเดตล่าสุด: <span id="last-update">--:--:--</span>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Temperature Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="flex justify-between items-center text-slate-400 mb-2">
+          <span class="text-sm font-medium">อุณหภูมิปัจจุบัน</span>
+          <i class="fa-solid fa-temperature-high text-amber-500 text-xl"></i>
+        </div>
+        <div class="text-4xl font-extrabold text-white">
+          <span id="temp-val">28.5</span> <span class="text-2xl text-amber-500">°C</span>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">สูงสุดวันนี้: <span class="text-slate-300">31.2 °C</span> | ต่ำสุด: <span class="text-slate-300">25.1 °C</span></p>
+      </div>
+
+      <!-- Humidity Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="flex justify-between items-center text-slate-400 mb-2">
+          <span class="text-sm font-medium">ความชื้นสัมพัทธ์</span>
+          <i class="fa-solid fa-droplet text-blue-500 text-xl"></i>
+        </div>
+        <div class="text-4xl font-extrabold text-white">
+          <span id="humidity-val">62</span> <span class="text-2xl text-blue-500">%</span>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">ระดับความชื้นปกติสำหรับสภาพแวดล้อม indoor</p>
+      </div>
+
+      <!-- Status Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="flex justify-between items-center text-slate-400 mb-2">
+          <span class="text-sm font-medium">สถานะระบบ</span>
+          <i class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-emerald-400 mt-1">ปกติ (Normal)</div>
+        <p class="text-xs text-slate-500 mt-3">เชื่อมต่อเซนเซอร์: <span class="text-slate-300">ESP32-Node-01</span></p>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+      <h2 class="text-lg font-semibold mb-4 text-slate-200">แนวโน้มอุณหภูมิและความชื้น (24 ชั่วโมงที่ผ่านมา)</h2>
+      <div class="relative w-full h-80">
+        <canvas id="tempChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Initialize Chart
+    const ctx = document.getElementById('tempChart').getContext('2d');
+    const times = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+    const tempData = [25.1, 24.8, 24.5, 27.2, 31.2, 30.5, 28.5, 26.8];
+    const humidityData = [75, 78, 80, 68, 55, 58, 62, 70];
+
+    const tempChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: times,
+        datasets: [
+          {
+            label: 'อุณหภูมิ (°C)',
+            data: tempData,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'ความชื้น (%)',
+            data: humidityData,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            fill: true,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8' } }
+        },
+        scales: {
+          x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+          y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+        }
+      }
+    });
+
+    // Simulated Real-time Update Function
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('last-update').innerText = now.toLocaleTimeString('th-TH');
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>
